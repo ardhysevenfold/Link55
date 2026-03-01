@@ -1,221 +1,272 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>55Five Prediction Pro</title>
-
+<title>Wingo X7 Panel</title>
 <style>
-body,html{
-    margin:0;padding:0;height:100%;
-    background:#121212;color:#fff;
-    font-family:sans-serif;overflow:hidden
+body{
+    margin:0;
+    background:#000;
+    font-family:Arial;
+    color:#FFD700;
 }
-#top-panel{
-    height:35vh;padding:10px;
-    border-bottom:2px solid #ff4444;
-    background:#1a1a1a;overflow-y:auto
+
+/* SPLIT */
+.top{
+    height:30vh;
+    padding:8px;
+    box-sizing:border-box;
 }
-#bottom-panel{height:65vh;background:#000}
-iframe{width:100%;height:100%;border:none}
-table{width:100%;border-collapse:collapse;margin-top:5px}
-th{
-    background:#333;color:#888;font-size:10px;
-    padding:6px;text-transform:uppercase
+
+.bottom{
+    height:70vh;
 }
-td{
-    padding:8px;text-align:center;
-    border-bottom:1px solid #2a2a2a;
-    font-size:12px;font-weight:bold
+
+.bottom iframe{
+    width:100%;
+    height:100%;
+    border:none;
 }
-.win{color:#00ff00;background:rgba(0,255,0,.1)}
-.lose{color:#ff4444;background:rgba(255,68,68,.1)}
-.timer{color:#ffeb3b;font-family:monospace}
-.period{color:#03a9f4}
+
+/* HEADER */
+.row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.periode{ font-size:14px; }
+.timer{ font-size:24px; font-weight:bold; }
+
+/* HASIL */
+.hasil{
+    font-size:40px;
+    text-align:center;
+    margin-top:3px;
+}
+
+.k{ color:#00BFFF; }
+.b{ color:#FF4444; }
+
+.flash{
+    animation:blink 0.5s linear 6;
+}
+
+@keyframes blink{
+    50%{ opacity:0; }
+}
+
+/* HISTORY */
+.history{
+    margin-top:5px;
+    display:flex;
+    justify-content:center;
+    gap:4px;
+    flex-wrap:wrap;
+}
+
+.history div{
+    padding:3px 5px;
+    border:1px solid #FFD700;
+    border-radius:4px;
+    font-size:11px;
+}
+
+/* 4 MINI TABLE */
+.mini-tables{
+    margin-top:6px;
+    display:flex;
+    justify-content:space-between;
+    gap:5px;
+}
+
+.box{
+    flex:1;
+    border:1px solid #FFD700;
+    border-radius:6px;
+    text-align:center;
+    padding:4px;
+    font-size:11px;
+}
+
+.win{ color:#00FF88; }
+.lose{ color:#FF4444; }
+
+.blink{
+    animation:blink 0.5s linear 6;
+}
 </style>
 </head>
-
 <body>
 
-<div id="top-panel">
-  <div style="display:flex;justify-content:space-between;margin-bottom:8px">
-    <div id="status" style="font-size:11px;color:#888">Menghubungkan...</div>
-    <div style="font-size:12px">
-      Prediksi: <span id="next-guess" style="color:#ffeb3b">---</span>
-    </div>
-  </div>
+<div class="top">
 
-  <table>
-    <thead>
-      <tr>
-        <th>Periode</th>
-        <th>Prediksi</th>
-        <th>Count</th>
-        <th>Hasil</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody id="table-body"></tbody>
-  </table>
+    <div class="row">
+        <div class="periode" id="periode">Periode: -</div>
+        <div class="timer" id="timer">30</div>
+    </div>
+
+    <div class="hasil" id="hasil">-</div>
+
+    <div class="history" id="history"></div>
+
+    <div class="mini-tables">
+        <div class="box" id="flashBox">-</div>
+        <div class="box win">WIN<br><span id="winTotal">0</span></div>
+        <div class="box lose">LOSE<br><span id="loseTotal">0</span></div>
+        <div class="box">L.Streakx<br><span id="maxLose">0</span></div>
+    </div>
+
 </div>
 
-<div id="bottom-panel">
-  <iframe src="https://55x4mqd.com"></iframe>
+<div class="bottom">
+    <iframe src="https://example.com"></iframe>
 </div>
 
 <script>
-// ================= CONFIG =================
-const AUTH_HEADER = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOiIxNzM3MjUyMzk3IiwibmJmIjoiMTczNzI1MjM5NyIsImV4cCI6IjE3MzcyNTQxOTciLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL2V4cGlyYXRpb24iOiIxLzE5LzIwMjUgOTozNjozNyBBTSIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkFjY2Vzc19Ub2tlbiIsIlVzZXJJZCI6IjQ0MTgwNCIsIlVzZXJOYW1lIjoiNjI4NTc5NjI5NzE4OSIsIlVzZXJQaG90byI6Imh0dHBzOi8vYXBpLmxpZ2h0c3BhY2VjZG4uY29tL2ltZy9hdmF0YXIuY2ZhOGRkOWQuc3ZnIiwiTmlja05hbWUiOiJSYWNrbmFyb2NLIiwiQW1vdW50IjoiMTM3LjAwIiwiSW50ZWdyYWwiOiIwIiwiTG9naW5NYXJrIjoiSDUiLCJMb2dpblRpbWUiOiIxLzE5LzIwMjUgOTowNjozNyBBTSIsIkxvZ2luSVBBZGRyZXNzIjoiMTE0LjEwLjEzNC4xODIiLCJEYk51bWJlciI6IjAiLCJJc3ZhbGlkYXRvciI6IjAiLCJLZXlDb2RlIjoiNTgwIiwiVG9rZW5UeXBlIjoiQWNjZXNzX1Rva2VuIiwiUGhvbmVUeXBlIjoiMSIsIlVzZXJUeXBlIjoiMCIsIlVzZXJOYW1lMiI6IiIsImlzcyI6Imp3dElzc3VlciIsImF1ZCI6ImxvdHRlcnlUaWNrZXQifQ.gSi3-FxVwLXKTA1drTBTrA6HqiASn6eBkmsWMyW2HP0";
 
-const PROXY = "https://api.allorigins.win/raw?url=";
-const API_ISSUE = "https://newapi.55lottertttapi.com/api/webapi/GetGameIssue";
-const API_LIST  = "https://newapi.55lottertttapi.com/api/webapi/GetNoaverageEmerdList";
+let historyData = [];
+let lastPeriode = null;
 
-// ================= STATE =================
-let history = [];
-let currentPrediction = "BESAR";
-let activePeriod = "-----";
-let isFetching = false;
+let winTotal = 0;
+let loseTotal = 0;
 
-// ================= ENGINE =================
-function startEngine(){
-  generatePrediction();
-  setInterval(tickEngine,1000);
+let currentLoseStreak = 0;
+let maxLoseStreak = 0;
+
+/* ===================== */
+
+function getPeriode(){
+    const now = new Date();
+    const utc = now.getTime() + (now.getTimezoneOffset()*60000);
+    const d = new Date(utc);
+
+    const year = d.getUTCFullYear();
+    const month = String(d.getUTCMonth()+1).padStart(2,'0');
+    const day = String(d.getUTCDate()).padStart(2,'0');
+
+    const totalSeconds =
+        d.getUTCHours()*3600 +
+        d.getUTCMinutes()*60 +
+        d.getUTCSeconds();
+
+    const period = Math.floor(totalSeconds/30);
+
+    return `${year}${month}${day}${String(period).padStart(4,'0')}`;
 }
 
-function tickEngine(){
-  const now = new Date();
-  const sec = now.getSeconds();
-
-  const count = sec < 30 ? 30-sec : 60-sec;
-  const live = document.getElementById("live-count");
-  if(live) live.innerText = count+"s";
-
-  if(sec===0 || sec===30) updateCurrentPeriod();
-
-  if((sec===1 || sec===31) && !isFetching){
-    isFetching = true;
-    fetchFinalResult();
-  }
-
-  if(sec===3 || sec===33){
-    isFetching = false;
-    generatePrediction();
-  }
+function getRemaining(){
+    const now = new Date();
+    const sec = now.getUTCSeconds();
+    return 30 - (sec % 30);
 }
 
-// ================= API =================
-async function updateCurrentPeriod(){
-  try{
-    const res = await fetch(
-      PROXY + API_ISSUE,
-      {
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json; charset=UTF-8",
-          "Authorization":AUTH_HEADER
-        },
-        body:JSON.stringify({
-          typeId:30,
-          language:0,
-          random:"166b81d9568e4123a83a2c7fdb80b7d9",
-          signature:"5DB43C344C7381B72B5262FFB3572444",
-          timestamp:Math.floor(Date.now()/1000)
-        })
-      }
-    );
-
-    const json = await res.json();
-    const c = json?.data;
-    if(c?.issueNumber){
-      activePeriod = c.issueNumber.toString().slice(-5);
-      render();
+function generateResult(period){
+    let seed = 0;
+    for(let i=0;i<period.length;i++){
+        seed += period.charCodeAt(i);
     }
-  }catch(e){
-    console.error("GetGameIssue error",e);
-  }
+    return seed % 10;
 }
 
-async function fetchFinalResult(){
-  document.getElementById("status").innerText="Syncing...";
-  try{
-    const res = await fetch(
-      PROXY + API_LIST,
-      {
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json; charset=UTF-8",
-          "Authorization":AUTH_HEADER
-        },
-        body:JSON.stringify({
-          pageSize:10,
-          pageNo:1,
-          typeId:30,
-          language:0,
-          random:"b631eb26bac6403e99093913e5bb48c5",
-          signature:"A6203E85132E5FE26B5F43DDF1ECDD07",
-          timestamp:Math.floor(Date.now()/1000)
-        })
-      }
-    );
+function addHistory(val){
+    historyData.unshift(val);
+    if(historyData.length > 10){
+        historyData.pop();
+    }
 
-    const json = await res.json();
-    const lst = json?.data?.list || [];
-    if(!lst.length) return;
+    const historyEl = document.getElementById("history");
+    historyEl.innerHTML = "";
 
-    const terbaru = lst[0];
-    const num = parseInt(terbaru.number.split(",").pop());
-    const cat = num >= 5 ? "BESAR" : "KECIL";
-    const stat = currentPrediction === cat ? "WIN" : "LOSE";
-
-    history.unshift({
-      period: terbaru.issueNumber.toString().slice(-5),
-      pred: currentPrediction,
-      num, cat, stat
+    historyData.forEach(item=>{
+        const div = document.createElement("div");
+        div.innerText = item;
+        historyEl.appendChild(div);
     });
-
-    if(history.length>6) history.pop();
-    document.getElementById("status").innerText="OK";
-    render();
-
-  }catch(e){
-    console.error("API ERROR",e);
-    document.getElementById("status").innerText="API / TOKEN ERROR";
-  }
 }
 
-// ================= UI =================
+/* ===================== */
+/* POLA PREDIKSI SEDERHANA */
+
 function generatePrediction(){
-  currentPrediction = Math.random()>0.5 ? "BESAR" : "KECIL";
-  document.getElementById("next-guess").innerText=currentPrediction;
-  render();
+
+    if(historyData.length < 5){
+        return "K";
+    }
+
+    let kCount = 0;
+    let bCount = 0;
+
+    for(let i=0;i<5;i++){
+        if(historyData[i].includes("K")) kCount++;
+        else bCount++;
+    }
+
+    // jika 5 terakhir dominan K → prediksi B (lawan arus)
+    if(kCount > bCount) return "B";
+    else return "K";
 }
 
-function render(){
-  const tbody=document.getElementById("table-body");
-  let html=`
-    <tr>
-      <td class="period">${activePeriod}</td>
-      <td>${currentPrediction}</td>
-      <td class="timer" id="live-count">--s</td>
-      <td>--</td>
-      <td style="color:#666">WAIT</td>
-    </tr>
-  `;
-  history.forEach(i=>{
-    html+=`
-    <tr class="${i.stat.toLowerCase()}">
-      <td class="period">${i.period}</td>
-      <td>${i.pred}</td>
-      <td>0s</td>
-      <td>${i.cat} (${i.num})</td>
-      <td>${i.stat}</td>
-    </tr>`;
-  });
-  tbody.innerHTML=html;
+/* ===================== */
+
+function updateStats(isWin){
+
+    const flashBox = document.getElementById("flashBox");
+
+    if(isWin){
+        winTotal++;
+        currentLoseStreak = 0;
+        flashBox.innerText = "WIN";
+        flashBox.className = "box win blink";
+    }else{
+        loseTotal++;
+        currentLoseStreak++;
+        if(currentLoseStreak > maxLoseStreak){
+            maxLoseStreak = currentLoseStreak;
+        }
+        flashBox.innerText = "LOSE";
+        flashBox.className = "box lose blink";
+    }
+
+    document.getElementById("winTotal").innerText = winTotal;
+    document.getElementById("loseTotal").innerText = loseTotal;
+    document.getElementById("maxLose").innerText = maxLoseStreak;
 }
 
-window.onload=startEngine;
+/* ===================== */
+
+function update(){
+
+    const periode = getPeriode();
+    const sisa = getRemaining();
+
+    document.getElementById("periode").innerText = "Periode: " + periode;
+    document.getElementById("timer").innerText = sisa;
+
+    if(periode !== lastPeriode){
+        lastPeriode = periode;
+
+        const angka = generateResult(periode);
+        const kategori = angka <= 4 ? "K" : "B";
+
+        const hasilEl = document.getElementById("hasil");
+        hasilEl.innerText = angka + " (" + kategori + ")";
+        hasilEl.className = "hasil " + (kategori==="K"?"k":"b") + " flash";
+
+        addHistory(angka + kategori);
+
+        const prediksi = generatePrediction();
+
+        const isWin = prediksi === kategori;
+
+        updateStats(isWin);
+    }
+}
+
+setInterval(update,1000);
+update();
+
 </script>
+
 </body>
 </html>
