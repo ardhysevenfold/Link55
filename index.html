@@ -1,57 +1,65 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>WEB 55 PANEL</title>
-  <style>
-    body{
-      margin:0;
-      background:#111;
-      color:white;
-      font-family:Arial;
-      height:100vh;
-      display:flex;
-      flex-direction:column;
-    }
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WEB 55 PANEL</title>
 
-    .panel{
-      height:25vh;
-      background:#1c1c1c;
-      overflow:auto;
-      padding:10px;
-    }
+<style>
+body{
+  margin:0;
+  background:#111;
+  color:white;
+  font-family:Arial;
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+}
 
-    .web55{
-      height:75vh;
-    }
+.panel{
+  height:25vh;
+  background:#1c1c1c;
+  overflow:auto;
+  padding:10px;
+}
 
-    iframe{
-      width:100%;
-      height:100%;
-      border:none;
-    }
+.web55{
+  height:75vh;
+}
 
-    table{
-      width:100%;
-      border-collapse:collapse;
-    }
+iframe{
+  width:100%;
+  height:100%;
+  border:none;
+}
 
-    th,td{
-      border:1px solid #333;
-      padding:6px;
-      text-align:center;
-    }
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:14px;
+}
 
-    .win{
-      color:#00ff00;
-      font-weight:bold;
-    }
+th,td{
+  border:1px solid #333;
+  padding:6px;
+  text-align:center;
+}
 
-    .lose{
-      color:#ff0000;
-      font-weight:bold;
-    }
-  </style>
+th{
+  background:#222;
+}
+
+.win{
+  color:#00ff00;
+  font-weight:bold;
+}
+
+.lose{
+  color:#ff0000;
+  font-weight:bold;
+}
+</style>
 </head>
+
 <body>
 
 <div class="panel">
@@ -70,55 +78,65 @@
 </div>
 
 <div class="web55">
-  <!-- GANTI LINK DI SINI -->
-  <iframe src="https://55x4mqd.com"></iframe>
+  <iframe src="https://55x4mqd.com/#/home/"></iframe>
 </div>
 
 <script>
 
-let currentRow=null;
-let interval=null;
-let resultDone=false;
+let currentRow = null;
+let timer = null;
+let resultChecked = false;
 
-function kategori(n){ return n<=4?"Kecil":"Besar"; }
-function prediksi(){ return Math.random()>0.5?"Besar":"Kecil"; }
+function kategori(num){
+  return num <= 4 ? "Kecil" : "Besar";
+}
 
-async function api(){
-  const r=await fetch("https://link55.vercel.app/api");
-  return await r.json();
+function buatPrediksi(){
+  return Math.random() > 0.5 ? "Besar" : "Kecil";
+}
+
+async function ambilAPI(){
+  try{
+    const res = await fetch("https://link55.vercel.app/api");
+    return await res.json();
+  }catch(e){
+    return null;
+  }
 }
 
 function tambahBaris(periode){
-  const tb=document.getElementById("dataBody");
-  const tr=document.createElement("tr");
-  const p=prediksi();
+  const tbody = document.getElementById("dataBody");
+  const tr = document.createElement("tr");
+  const pred = buatPrediksi();
 
-  tr.innerHTML=`
+  tr.innerHTML = `
     <td>${periode}</td>
-    <td>${p}</td>
-    <td class="c">-</td>
-    <td class="h">-</td>
-    <td class="s">-</td>
+    <td>${pred}</td>
+    <td class="count">-</td>
+    <td class="hasil">-</td>
+    <td class="status">-</td>
   `;
 
-  tb.insertBefore(tr,tb.firstChild);
-  currentRow=tr;
+  tbody.insertBefore(tr, tbody.firstChild);
+  currentRow = tr;
 }
 
-function mulai(){
-  clearInterval(interval);
+function mulaiCountdown(){
+  clearInterval(timer);
 
-  interval=setInterval(async()=>{
-    const now=new Date();
-    const sec=now.getSeconds();
-    const sisa=sec<30?30-sec:60-sec;
+  timer = setInterval(async () => {
+
+    const now = new Date();
+    const sec = now.getSeconds();
+
+    let sisa = sec < 30 ? 30 - sec : 60 - sec;
 
     if(currentRow){
-      currentRow.querySelector(".c").innerText=sisa;
+      currentRow.querySelector(".count").innerText = sisa;
     }
 
-    if((sec===1||sec===31)&&!resultDone){
-      resultDone=true;
+    if((sec === 1 || sec === 31) && !resultChecked){
+      resultChecked = true;
       cekHasil();
     }
 
@@ -126,37 +144,43 @@ function mulai(){
 }
 
 async function cekHasil(){
-  const d=await api();
-  const hasil=d.hasil;
-  const kat=kategori(hasil);
+  const data = await ambilAPI();
+  if(!data) return;
 
-  const pred=currentRow.children[1].innerText;
-  const hCell=currentRow.querySelector(".h");
-  const sCell=currentRow.querySelector(".s");
+  const hasil = data.hasil;
+  const kategoriHasil = kategori(hasil);
 
-  hCell.innerText=kat+" "+hasil;
+  const hasilCell = currentRow.querySelector(".hasil");
+  const statusCell = currentRow.querySelector(".status");
+  const prediksi = currentRow.children[1].innerText;
 
-  if(pred===kat){
-    sCell.innerText="WIN";
-    sCell.className="s win";
+  hasilCell.innerText = kategoriHasil + " " + hasil;
+
+  if(prediksi === kategoriHasil){
+    statusCell.innerText = "WIN";
+    statusCell.className = "status win";
   }else{
-    sCell.innerText="LOSE";
-    sCell.className="s lose";
+    statusCell.innerText = "LOSE";
+    statusCell.className = "status lose";
   }
 
-  setTimeout(init,2000);
+  setTimeout(initPeriodeBaru,2000);
 }
 
-async function init(){
-  resultDone=false;
-  const d=await api();
-  tambahBaris(d.periode);
+async function initPeriodeBaru(){
+  resultChecked = false;
+  const data = await ambilAPI();
+  if(!data) return;
+
+  tambahBaris(data.periode);
 }
 
 async function start(){
-  const d=await api();
-  tambahBaris(d.periode);
-  mulai();
+  const data = await ambilAPI();
+  if(!data) return;
+
+  tambahBaris(data.periode);
+  mulaiCountdown();
 }
 
 start();
